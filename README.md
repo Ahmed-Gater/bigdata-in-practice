@@ -1,7 +1,8 @@
 # Spark-in-practice
-Ce repo a pour but de lister un ensemble de tps à faire pour apprendre à coder en Spark (Core, DataFrame, DataSet, SQL). Dans la mesure du possible, nous gardons le même dataset qui nous servira de fil conducteur tout au long de ces TPs. 
-# Présentation des jeux de données
-Les fichiers que nous manipulons dans le cadre de ces TPs sont des fichiers CSV, avec:
+Quoi de mieux qu'un exemple pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? 
+Dans la mesure du possible, nous gardons le même dataset qui nous servira de fil conducteur tout au long de ces TPs. 
+# Les jeux de données
+Les données que nous manipulons dans le cadre de ces TPs sont des fichiers au format CSV ayant les caractéristiques suivantes:
 * Point virgule (";") comme séparateur de champs
 * Point (".") comme séparateur décimal
 
