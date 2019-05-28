@@ -1,5 +1,5 @@
 # Spark-in-practice
-Quoi de mieux que des exemples issus de la pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? Rien de mieux. Pour cela, nous allons traiter à l'aide de Spark des uses cases issus concernant la grande distribution.  
+Quoi de mieux que des exemples issus de la pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? Rien de mieux. Pour cela, nous allons aborder des uses cases issus de la grande distribution.  
 
 # Les jeux de données
 Les données manipulées sont issues de la suite de test du moteur OLAP de Pentaho Mondrian.
