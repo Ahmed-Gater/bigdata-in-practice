@@ -1,12 +1,13 @@
 # Spark-in-practice
-Quoi de mieux qu'un exemple pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? 
-Dans la mesure du possible, nous gardons le même dataset qui nous servira de fil conducteur tout au long de ces TPs. 
+Quoi de mieux que des exemples issus de la pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? Rien de mieux. Pour cela, nous allons traiter à l'aide de Spark des uses cases issus concernant la grande distribution.  
+
 # Les jeux de données
+Les données manipulées sont issues de la suite de test du moteur OLAP de Pentaho Mondrian.
 Les données que nous manipulons dans le cadre de ces TPs sont des fichiers au format CSV ayant les caractéristiques suivantes:
 * Point virgule (";") comme séparateur de champs
 * Point (".") comme séparateur décimal
 
-La liste des fichiers avec le descriptif des champs les plus importants est comme suit: 
+## Liste des données: 
 * **account**: liste des comptes analytiques
 * **category**: liste des catégories
 * **currency**: liste des monnaies
@@ -26,7 +27,7 @@ La liste des fichiers avec le descriptif des champs les plus importants est comm
 * **salary**: historique des salaires versés aux employés
 * **sales**: liste les ventes effectuées
 * **store**: liste les magasin de l'enseigne
-* **time_by_day**: liste tous 
+* **time_by_day**: liste tous  
 * **warehouse**: liste les entrepôts de l'enseigne
 * **warehouse_type**: type d'entrepôt
 
