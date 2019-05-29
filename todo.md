@@ -1,0 +1,26 @@
+* TO pour Spark Core RDD
+  * reduce(func)
+  * broadcast
+  * accumulator
+  * ~~collect()~~
+  * count()
+  * first()
+  * ~~take(n)~~
+  * saveAsTextFile(path)
+  * saveAsSequenceFile(path)
+  * saveAsObjectFile(path) 
+  * countByKey()
+  * foreach(func)
+  * ~~map(fun)~~
+  * ~~mapToPair(func)~~
+  * flatMap(func)
+  * flatMapToPair(func)
+  * filter(func)
+  * groupBy()
+  * ~~groupByKey()~~
+  * ~~reduceByKey(func)~~
+  * sortByKey([ascending])
+  * join(otherDataset)
+  * intersect(otherDataset)
+  * distinct()
+  * union(otherDataset)
