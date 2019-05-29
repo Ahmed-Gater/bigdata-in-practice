@@ -159,6 +159,46 @@ numberUnitsByStore.forEach((k,v) -> System.out.println("Magasin : " + k + " a un
 
 </details>
 
+<details><summary>Exercice 6: Calculer le chiffre d'affaire par région.  
+
+```
+JavaPairRDD<Integer, Double> caByRegion = ...
+avec un résultat correspondant à: 
+Region : 23 avec un CA : 537768.1800000002
+Region : 89 avec un CA : 151039.54000000007
+Region : 26 avec un CA : 265264.4699999993
+Region : 47 avec un CA : 310913.3200000007
+Region : 2 avec un CA : 76719.89
+...
+```
+</summary>
+
+```
+// Lecture du fichier store à broadcaster (fichier très petit)
+Map<Integer, Integer> storeRegionMapRdd = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile("data/store.csv")
+                .mapToPair((PairFunction<String, Integer, Integer>) s -> {
+                    Store parse = Store.parse(s);
+                    return new Tuple2<>(parse.getId(), parse.getRegionId());
+                })
+                .collectAsMap();
+Broadcast<Map<Integer, Integer>> storeRegionMap = sparkSession.sparkContext().broadcast(storeRegionMapRdd, ClassTag$.MODULE$.apply(Map.class));
+
+// Faire un Map-side Join
+JavaPairRDD<Integer, Double> caByRegion = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile("data/sales.csv")
+                .mapToPair((PairFunction<String, Integer, Double>) s -> {
+                    Sale sale = Sale.parse(s);
+                    return new Tuple2<>(storeRegionMap.value().getOrDefault(sale.getStoreId(), -1),
+                            sale.getUnitSales() * sale.getStoreSales());
+                })
+                .reduceByKey((Function2<Double, Double, Double>) (a, b) -> a + b);
+
+caByRegion.collectAsMap().forEach((k,v) -> System.out.println("Region : " + k + " avec un CA : " + v ));
+```
+
+</details>
+
 # Spark DataFrame
 
 # Spark DataSet
