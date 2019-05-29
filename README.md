@@ -46,9 +46,64 @@ Les données manipulées sont issues de la suite de test du moteur OLAP de Penta
     --- | --- | ---
     unit_sales|double| Nombre d'unités vendues
     --- | --- | ---
-   </details>
+ </details>
 
-* **store**: liste les magasin de l'enseigne
+* **store**: liste les magasin de l'enseigne<details>
+  <summary> Liste des colonnes </summary>
+
+    Nom|Type|Commentaires
+    --- | --- | ---
+    store_id|int
+    --- | --- | ---
+    store_type|string
+    --- | --- | ---
+    region_id|int|
+    --- | --- | ---
+    store_name|string|
+    --- | --- | ---
+    store_number|int|
+    --- | --- | ---
+    store_street_address|string|
+    --- | --- | ---
+    store_city|string|
+    --- | --- | ---
+    store_state|string|
+    --- | --- | ---
+    store_postal_code|int|
+    --- | --- | ---
+    store_country|string|
+    --- | --- | ---
+    store_manager|string|
+    --- | --- | ---
+    store_phone|string|
+    --- | --- | ---
+    store_fax|string|
+    --- | --- | ---
+    first_opened_date|date|au format dd/MM/yyyy  hh:mm:ss
+    --- | --- | ---
+    last_remodel_date|date|au format dd/MM/yyyy  hh:mm:ss
+    --- | --- | ---
+    store_sqft|int|
+    --- | --- | ---
+    grocery_sqft|int|
+    --- | --- | ---
+    frozen_sqft|int|
+    --- | --- | ---
+    meat_sqft|int|
+    --- | --- | ---
+    coffee_bar|int|0=false et 1=true
+    --- | --- | ---
+    video_store|int|0=false et 1=true
+    --- | --- | ---
+    salad_bar|int|0=false et 1=true
+    --- | --- | ---
+    prepared_food|int|0=false et 1=true
+    --- | --- | ---
+    florist|int|0=false et 1=true
+    --- | --- | ---  
+
+</details>
+
 * **time_by_day**: liste tous  
 * **warehouse**: liste les entrepôts de l'enseigne
 * **warehouse_type**: type d'entrepôt
