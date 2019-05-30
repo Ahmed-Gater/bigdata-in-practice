@@ -1,6 +1,6 @@
 * TO pour Spark Core RDD
   * reduce(func)
-  * broadcast
+  * ~~broadcast~~
   * accumulator
   * ~~collect()~~
   * count()
