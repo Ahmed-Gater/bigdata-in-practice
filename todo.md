@@ -3,13 +3,14 @@
   * ~~broadcast~~
   * accumulator
   * ~~collect()~~
+  * ~~collectAsMap()~~
   * count()
   * first()
   * ~~take(n)~~
   * saveAsTextFile(path)
   * saveAsSequenceFile(path)
   * saveAsObjectFile(path) 
-  * countByKey()
+  * ~~countByKey()~~
   * foreach(func)
   * ~~map(fun)~~
   * ~~mapToPair(func)~~
@@ -24,3 +25,7 @@
   * intersect(otherDataset)
   * distinct()
   * union(otherDataset)
+  * cogroup
+  * ~~mapPartition: bonnes explications sur http://bytepadding.com/big-data/spark/spark-mappartitions/~~
+     * ~~Utilisé généralement quant on utilise un service externe~~
+  * ~~forEach~~
