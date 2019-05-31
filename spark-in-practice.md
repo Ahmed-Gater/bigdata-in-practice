@@ -1,5 +1,5 @@
 # Spark in practice
-Quoi de mieux que des exemples issus de la pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? Rien de mieux. Pour cela, nous allons aborder des uses cases issus de la grande distribution.  
+Quoi de mieux que des exemples issus de la pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? Rien de mieux. Pour cela, nous allons aborder des uses cases issus de la grande distribution. La version de Spark pour ces exercices est 2.4.2 et scala 11.  
 
 # Les jeux de données
 La description des données utilisées pour ses exercices est accessible [ici](https://github.com/Ahmed-Gater/spark-in-practice/blob/master/datasetdescription.md).
@@ -29,7 +29,8 @@ JavaRDD<String> salesAsStringRDD = ...
 
 </summary>  
 <p>
-
+  
+#### Charger le fichier texte en utilisant la méthode textFile de Java Spark Contexte !!!
 ```
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -56,6 +57,8 @@ product_id;time_id;customer_id;promotion_id;store_id;store_sales;store_cost;unit
 JavaRDD<Sale> salesAsSaleObject = ...
 ```
 </summary>  
+
+#### Charger le fichier comme à l'exercice 2 et mapper chaque ligne vers un objet Sale qu'on aura créé !!!
 
 ```
 import org.apache.spark.api.java.JavaRDD;
@@ -89,7 +92,9 @@ Magasin : 20 a un chiffre d'affaires : 68089.59
 ```
 </summary>  
 
-* Solution avec reduceByKey (à privilègier)
+#### On peut le faire avec reduceByKey ou groupByKey. Cependant, il faut privilègier reduceByKey, car un calcul intermédiaire se fait au niveau de chaque partition avant d'envoyer les résultats sur le réseau. Ce qui fait qu'on n'envoie qu'un tuple par clé et par partition. Conséquence, moins de trafic réseau !!!
+
+* Solution avec reduceByKey
 
 ```
 import org.apache.spark.api.java.JavaPairRDD;
@@ -109,7 +114,7 @@ JavaPairRDD<Integer, Double> storeCA = JavaSparkContext.fromSparkContext(sparkSe
 storeCA.collectAsMap().forEach((k,v) -> System.out.println("Magasin : " + k + " a un chiffre d'affaires : " + v));
 ```
 
-* Solution avec reduceByKey (à privilègier)
+* Solution avec groupByKey
 
 ```
 import org.apache.spark.api.java.JavaPairRDD;
@@ -148,6 +153,7 @@ Magasin : 14 a un vendu : 2593 unités
 ```
 </summary>  
 
+#### Mapper la RDD vers une Map de type Pair et faire un countByKey 
 ```
 Map<Integer, Long> numberUnitsByStore = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
                 .textFile(filePath)
@@ -173,7 +179,20 @@ Region : 2 avec un CA : 76719.89
 ```
 </summary>
 
+#### Broadcaster le dataset store (qui est très léger) et faire un Map-side Join !!!
+
 ```
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.sql.SparkSession;
+import scala.Tuple2;
+import scala.reflect.ClassTag$;
+
 // Lecture du fichier store à broadcaster (fichier très petit)
 Map<Integer, Integer> storeRegionMapRdd = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
                 .textFile("data/store.csv")
@@ -198,6 +217,44 @@ caByRegion.collectAsMap().forEach((k,v) -> System.out.println("Region : " + k + 
 ```
 
 </details>
+
+<details><summary>Exercice 7: Comparer les ventes (en termes de CA) entre les premiers trimestres (Q1) de 1997 et 1998    
+
+```
+JavaPairRDD<Integer, Double>  yearCAQuarter= ...
+
+CA Q1 de l'année 1997 : 460615.02999999735
+CA Q1 de l'année 1998 : 965701.8800000021
+...
+```
+
+</summary>
+
+```
+// Clé=TimeId et Valeur=Année
+Map<Integer, Integer> quarterTimeId = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile(timeByDayFilePath)
+                .map((Function<String, TimeByDay>) s -> TimeByDay.parse(s))
+                .filter((Function<TimeByDay, Boolean>) s -> s.getQuarter().equals(quarter))
+                .mapToPair((PairFunction<TimeByDay, Integer, Integer>) timeByDay -> new Tuple2<>(timeByDay.getTimeId(),         
+                                    timeByDay.getTheYear()))
+                .collectAsMap();
+
+Broadcast<Map<Integer, Integer>> filteredTimeIds = sparkSession.sparkContext().broadcast(quarterTimeId,   
+                                                                                       ClassTag$.MODULE$.apply(Map.class));
+JavaPairRDD<Integer, Double>  yearCAQuarter= JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile(salesFilePath)
+                .map((Function<String, Sale>) s -> Sale.parse(s))
+                .filter((Function<Sale, Boolean>) sale -> filteredTimeIds.value().containsKey(sale.getTimeId()))
+                .mapToPair((PairFunction<Sale, Integer, Double>) sale ->
+                        new Tuple2<>(filteredTimeIds.value().getOrDefault(sale.getTimeId(), -1), sale.getStoreSales() * 
+                                                                                                  sale.getUnitSales()))
+                .reduceByKey((x, y) -> x + y);
+yearCAQuarter.collectAsMap().forEach((k,v) -> System.out.println("CA " + quarter + " de l'année " + k + " : " + v ));
+```
+
+</details>
+
 
 # Spark DataFrame
 
