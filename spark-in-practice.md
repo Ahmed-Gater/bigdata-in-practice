@@ -255,6 +255,42 @@ yearCAQuarter.collectAsMap().forEach((k,v) -> System.out.println("CA " + quarter
 
 </details>
 
+<details><summary>Exercice 8: Aprés avoir joint les sales, time_id, store_id, stocker le résultat sur Elasticsearch. Un objet Java permettant de communiquer avec Elasticsearch est fourni dans le git. Il offre une méthode prenant comme entrée une Map<> et qui l'envoie vers Elasticsearch. Une description de l'installation d'un noeud Elasticsearch via docker est également fournie dans le git. Notez que le but dans cet exercice n'est pas de comprendre le fonctionnement d'ES, mais de savoir comment communiquer avec un service externe à partir de Spark.      
+
+```
+Création du client ES: ESClient es = new ESClient("localhost",9200)  
+Envoi de documents vers ES: es.index("sales",map);
+...
+```
+
+</summary>
+
+```
+JavaRDD<Sale> sales = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile(salesFilePath)
+                .map((Function<String, Sale>) s -> Sale.parse(s));
+// Option 1 avec foreachPartition
+sales.foreachPartition((VoidFunction<Iterator<Sale>>) saleIterator -> {
+            ESClient es = new ESClient("localhost",9200) ;
+            ObjectMapper oMapper = new ObjectMapper();
+            saleIterator.forEachRemaining(sale -> {
+                Map<String, Object> map = oMapper.convertValue(sale, Map.class);
+                es.index("sales",map);
+            });
+});
+// Option 2 avec mapPartitions
+sales.mapPartitions((FlatMapFunction<Iterator<Sale>, Object>) saleIterator -> {
+            ESClient es = new ESClient("localhost",9200) ;
+            ObjectMapper oMapper = new ObjectMapper();
+            saleIterator.forEachRemaining(sale -> {
+                Map<String, Object> map = oMapper.convertValue(sale, Map.class);
+                es.index("sales",map);
+            });
+            return null;
+}).take(1);
+
+```
+</details>
 
 # Spark DataFrame
 
