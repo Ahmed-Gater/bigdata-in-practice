@@ -266,6 +266,15 @@ Envoi de documents vers ES: es.index("sales",map);
 </summary>
 
 ```
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.aga.sparkinpractice.clients.ESClient;
+import org.aga.sparkinpractice.model.Sale;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.*;
+import org.apache.spark.sql.SparkSession;
+
 JavaRDD<Sale> sales = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
                 .textFile(salesFilePath)
                 .map((Function<String, Sale>) s -> Sale.parse(s));
@@ -291,6 +300,62 @@ sales.mapPartitions((FlatMapFunction<Iterator<Sale>, Object>) saleIterator -> {
 
 ```
 </details>
+
+<details><summary>Exercice 9: calculer le chiffre d'affaires généré par niveau d'instruction (colonne education du fichier customer.csv.
+  Petite contrainte, le fichier customer.csv ne peut pas être broadcasté en l'état.
+  Le résultat attendu est:
+  
+  ```
+  Education level : Graduate Degree a un chiffre d'affaires : 284358.7000000002
+  Education level : High School Degree a un chiffre d'affaires : 1614680.6999999923
+  Education level : Partial College a un chiffre d'affaires : 506574.38000000064
+  Education level : Bachelors Degree a un chiffre d'affaires : 1394302.7699999944
+  Education level : Partial High School a un chiffre d'affaires : 1650653.7099999934
+  ```
+  
+  </summary>
+  
+  ```
+  JavaPairRDD<Long, String> customerEducationLevel = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile(customerFilePath)
+                .mapToPair((PairFunction<String, Long, String>) s -> {
+                    Customer parse = Customer.parse(s);
+                    return new Tuple2<>(parse.getCustomerId(), parse.getEducation());
+                });
+
+        JavaPairRDD<Long, Double> customerSales = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile(salesFilePath)
+                .mapToPair((PairFunction<String, Long, Double>) s -> {
+                            Sale parse = Sale.parse(s);
+                            return new Tuple2<>(parse.getCustomerId(), parse.getUnitSales() * parse.getStoreSales());
+                        }
+                );
+        JavaPairRDD<String, Double> educationExpenses =
+                customerSales.join(customerEducationLevel)
+                        .values()
+                        .mapToPair((PairFunction<Tuple2<Double, String>, String, Double>) t ->
+                                    new Tuple2<>(t._2(), t._1()))
+                        .reduceByKey((Function2<Double, Double, Double>) (o, o2) -> o + o2);
+        educationExpenses.collectAsMap().forEach((k,v) -> System.out.println("Education level : " + k + " a un chiffre d'affaires : " + v));
+  ```
+     
+  </details>
+
+
+<details><summary>Exercice 10: similaire à l'exercice 8 mais en stockant les résultats sous format CSV sur HDFS.
+  </summary>
+  
+  L'idée est de transformer le résultat de l'enrichissement à une JavaRDD<String> où chaque entrée représente l'objet enrichi sours format CSV. 
+  
+  ```
+  JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
+                .textFile(salesFilePath)
+                .map((Function<String, Sale>) s -> Sale.parse(s))
+                .map(s -> s.toCSVFormat(";"))
+                .saveAsTextFile("data/salesenriched.csv");
+  ```
+  
+  </details>
 
 # Spark DataFrame
 
