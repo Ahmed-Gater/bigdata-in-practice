@@ -8,7 +8,68 @@ Les données manipulées sont issues de la suite de test du moteur OLAP de Penta
 * **account**: liste des comptes analytiques
 * **category**: liste des catégories
 * **currency**: liste des monnaies
-* **customer**: liste des clients ayant une carte de fidélité
+* **customer**: liste les clients ayant une carte de fidélité<details>
+  <summary> Liste des colonnes</summary>
+  
+    Nom|Type|Commentaire
+    --- | --- | ---
+    lName|String|
+    --- | --- | ---
+    fName|String|
+    --- | --- | ---
+    mi|String|
+    --- | --- | ---
+    address1|String|
+    --- | --- | ---
+    address2|String|
+    --- | --- | ---
+    address3|String|
+    --- | --- | ---
+    address4|String|
+    --- | --- | ---
+    city|String|
+    --- | --- | ---
+    stateProvince|String|
+    --- | --- | ---
+    postalCode|int|
+    --- | --- | ---
+    country|String|
+    --- | --- | ---
+    customerRegionId|int|
+    --- | --- | ---
+    phone1|String|
+    --- | --- | ---
+    phone2|String|
+    --- | --- | ---
+    birthdate|String|
+    --- | --- | ---
+    maritalStatus|String|
+    --- | --- | ---
+    yearlyIncome|String|
+    --- | --- | ---
+    gender|String|
+    --- | --- | ---
+    totalChildren|int|
+    --- | --- | ---
+    numChildrenAtHome|int|
+    --- | --- | ---
+    education|String|
+    --- | --- | ---
+    dateAccountPpened|String|
+    --- | --- | ---
+    memberCard|String|
+    --- | --- | ---
+    occupation|String|
+    --- | --- | ---
+    houseOwner|boolean|
+    --- | --- | ---
+    numCarsOwned|int|
+    --- | --- | ---
+    fullName|String|
+    --- | --- | ---
+
+</details>
+
 * **days**: liste des jours de semaine
 * **department**: liste des départements de l'enseigne
 * **employee**: liste des employés 
