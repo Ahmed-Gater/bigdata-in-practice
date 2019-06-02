@@ -7,21 +7,18 @@
   * count()
   * first()
   * ~~take(n)~~
-  * saveAsTextFile(path)
-  * saveAsSequenceFile(path)
-  * saveAsObjectFile(path) 
+  * ~~saveAsTextFile(path)/saveAsSequenceFile(path)/saveAsObjectFile(path)~~
   * ~~countByKey()~~
-  * foreach(func)
   * ~~map(fun)~~
   * ~~mapToPair(func)~~
   * flatMap(func)
   * flatMapToPair(func)
-  * filter(func)
+  * ~~filter(func)~~
   * groupBy()
   * ~~groupByKey()~~
   * ~~reduceByKey(func)~~
   * sortByKey([ascending])
-  * join(otherDataset)
+  * ~~join(otherDataset)~~
   * intersect(otherDataset)
   * distinct()
   * union(otherDataset)
@@ -29,3 +26,4 @@
   * ~~mapPartition: bonnes explications sur http://bytepadding.com/big-data/spark/spark-mappartitions/~~
      * ~~Utilisé généralement quant on utilise un service externe~~
   * ~~forEach~~
+  * ~~foreachPartition~~
