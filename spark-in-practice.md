@@ -314,6 +314,7 @@ sales.mapPartitions((FlatMapFunction<Iterator<Sale>, Object>) saleIterator -> {
   ```
   
   </summary>
+  L'idée de cette question est quand on fait une jointure, on réduit au maximum les données sur lesquelles on ne garde que les donnée nécessaires à la jointure pour réduire le coût du shuffling. 
   
   ```
   JavaPairRDD<Long, String> customerEducationLevel = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
