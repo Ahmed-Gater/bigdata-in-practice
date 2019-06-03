@@ -1,9 +1,8 @@
-# Spark in practice
-Quoi de mieux que des exemples issus de la pratique pour apprendre à développer avec Spark (Core, DataFrame, DataSet, SQL) ? Rien de mieux. Pour cela, nous allons aborder des uses cases issus de la grande distribution. La version de Spark pour ces exercices est 2.4.2 et scala 11.  
-
 # Les jeux de données
 La description des données utilisées pour ses exercices est accessible [ici](https://github.com/Ahmed-Gater/spark-in-practice/blob/master/datasetdescription.md).
+
 # Spark Core
+La version de Spark pour ces exercices est 2.4.2 et scala 11.  
 
 <details><summary>Exercice 1: Quel est le point d'entrée pour un Job Spark ?</summary>
 <p>
