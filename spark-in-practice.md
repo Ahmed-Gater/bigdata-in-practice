@@ -1,9 +1,8 @@
-# Les jeux de données
+# Introduction
 La description des données utilisées pour ses exercices est accessible [ici](https://github.com/Ahmed-Gater/spark-in-practice/blob/master/datasetdescription.md).
-
-# Spark Core
 La version de Spark pour ces exercices est 2.4.2 et scala 11.  
 
+# Exercices
 <details><summary>Exercice 1: Quel est le point d'entrée pour un Job Spark ?</summary>
 <p>
 
@@ -357,9 +356,5 @@ sales.mapPartitions((FlatMapFunction<Iterator<Sale>, Object>) saleIterator -> {
   
   </details>
 
-# Spark DataFrame
 
-# Spark DataSet
-
-# Spark SQL
 
