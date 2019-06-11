@@ -88,7 +88,7 @@ Dataset<Sale> as  = ...
 ```
 </summary>  
 
-#### On peut transformet un Dataset\<Row> à un Dataset\<Sale> en utilisant un encoder ou un aprés mapping du dataframe (si on veut dériver des objets avant d'appliquer l'encoder) !!!
+#### On peut transformer un Dataset\<Row> à un Dataset\<Sale> en utilisant un encoder ou un aprés mapping du dataframe (si on veut dériver des objets avant d'appliquer l'encoder) !!!
 
 ```
 // Version 1: transformer avec un encoder
@@ -150,7 +150,7 @@ Dataset<Sale> salesAsDataSet = salesAsDF.map((MapFunction<Row, Sale>) row -> Sal
                 Encoders.bean(Sale.class));
 salesAsDataSet.printSchema();
 ```
-Et les schéma du DataSet est:
+Et les schémas du DataSet est:
 
 ```
 // Schema avec la version 1
@@ -179,69 +179,74 @@ root
 ```
 </details>
 
-<details><summary>Exercice 4 avec DataFrame: Calculer le chiffre d'affaire par magasin
+<details><summary>Solution de l'exercice 4 avec DataFrame: Calculer le chiffre d'affaire par magasin
 
 ```
-JavaPairRDD<Integer, Double> storeCA = ...
-avec un résultat correspondant à: 
-Magasin : 23 a un chiffre d'affaires : 151039.54000000007
-Magasin : 17 a un chiffre d'affaires : 502334.1299999994
-Magasin : 8 a un chiffre d'affaires : 265264.4699999993
-Magasin : 11 a un chiffre d'affaires : 364652.1300000001
-Magasin : 20 a un chiffre d'affaires : 68089.59
+Le résultat peut correspondre à: 
++-------+------------------+
+|storeId|        sum(rowCA)|
++-------+------------------+
+|     12| 265012.0099999998|
+|     22|18206.400000000005|
+|      1|164537.21000000037|
+|     13| 537768.1800000002|
+|      6| 310913.3200000007|
 ...
 ```
 </summary>  
 
-#### On peut le faire avec reduceByKey ou groupByKey. Cependant, il faut privilègier reduceByKey, car un calcul intermédiaire se fait au niveau de chaque partition avant d'envoyer les résultats sur le réseau. Ce qui fait qu'on n'envoie qu'un tuple par clé et par partition. Conséquence, moins de trafic réseau !!!
+#### On peut le faire avec la méthode groupBy et sum ou bien avec la fonction agg !!!
 
-* Solution avec reduceByKey
-
-```
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.sql.SparkSession;
-import scala.Tuple2;
-
-JavaPairRDD<Integer, Double> storeCA = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(filePath)
-                .map((Function<String, Sale>) s -> Sale.parse(s, ";"));
-                .mapToPair((PairFunction<Sale, Integer, Double>) sale -> new Tuple2<>(sale.getStoreId(), sale.getStoreSales() * sale.getUnitSales()))
-                .reduceByKey((Function2<Double, Double, Double>) (a, b) -> a + b);
-storeCA.collectAsMap().forEach((k,v) -> System.out.println("Magasin : " + k + " a un chiffre d'affaires : " + v));
-```
-
-* Solution avec groupByKey
+* Solution avec groupBy et sum
 
 ```
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.sql.SparkSession;
-import scala.Tuple2;
+ArrayList<StructField> fields = new ArrayList<>(
+                Arrays.asList(
+                        DataTypes.createStructField("productId", DataTypes.LongType, true),
+                        DataTypes.createStructField("timeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("customerId", DataTypes.LongType, true),
+                        DataTypes.createStructField("promotionId", DataTypes.LongType, true),
+                        DataTypes.createStructField("storeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("storeSales", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("storeCost", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("unitSales", DataTypes.DoubleType, true)
+                ));
+StructType schema = DataTypes.createStructType(fields);
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(schema)
+                .load(filePath);
+Dataset<Row> caByStore = salesAsDF.select(col("storeId"), col("storeSales").multiply(col("unitSales")).as("rowCA"))
+                .groupBy(col("storeId"))
+                .sum("rowCA").as("ca");
+caByStore.show();
+```
 
-JavaPairRDD<Integer, Double> storeCA = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(filePath)
-                .map((Function<String, Sale>) s -> Sale.parse(s, ";"))
-                .mapToPair((PairFunction<Sale, Integer, Double>) sale -> new Tuple2<>(sale.getStoreId(), sale.getStoreSales() * sale.getUnitSales()))
-                .groupByKey()
-                .mapToPair((PairFunction<Tuple2<Integer, Iterable<Double>>, Integer, Double>) storeSalesCA -> new Tuple2<>(storeSalesCA._1(),
-                        StreamSupport.stream(storeSalesCA._2().spliterator(), false).reduce((x, y) -> x + y).get())
-                );
-        storeCA.collectAsMap().forEach((k,v) -> System.out.println("Magasin : " + k + " a un chiffre d'affaires : " + v));
-  
+* Solution avec groupBy et agg (plusieurs fonctions d'aggrégation sont implémentées)
+```
+Dataset<Row> caByStore = salesAsDF.select(col("storeId"), col("storeSales").multiply(col("unitSales")).as("rowCA"))
+                .groupBy(col("storeId"))
+                .agg(sum(col("rowCA")));
+```
+
+Le résultat ressemble à:
+```
++-------+------------------+
+|storeId|        sum(rowCA)|
++-------+------------------+
+|     12| 265012.0099999998|
+|     22|18206.400000000005|
+|      1|164537.21000000037|
+|     13| 537768.1800000002|
+|      6| 310913.3200000007|
 ```
 
 </details>
 
-<details><summary>Exercice 5 avec DataFrame: Calculer le nombre d'unités vendues par magasin
+<details><summary>Solution de l'exercice 5 avec DataFrame: Calculer le nombre d'unités vendues par magasin
 
 ```
 Map<Integer, Long> numberUnitsByStore = ...
@@ -254,19 +259,38 @@ Magasin : 14 a un vendu : 2593 unités
 ```
 </summary>  
 
-#### Mapper la RDD vers une Map de type Pair et faire un countByKey 
+#### Utiliser la fonction agg présentée dans l'exercice 4 
 ```
-Map<Integer, Long> numberUnitsByStore = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(filePath)
-                .map((Function<String, Sale>) s -> Sale.parse(s, ";"))
-                .mapToPair((PairFunction<Sale, Integer, Double>) sale -> new Tuple2<>(sale.getStoreId(), sale.getUnitSales()))
-                .countByKey();
-numberUnitsByStore.forEach((k,v) -> System.out.println("Magasin : " + k + " a un vendu : " + v + " unités"));
+ArrayList<StructField> fields = new ArrayList<>(
+                Arrays.asList(
+                        DataTypes.createStructField("productId", DataTypes.LongType, true),
+                        DataTypes.createStructField("timeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("customerId", DataTypes.LongType, true),
+                        DataTypes.createStructField("promotionId", DataTypes.LongType, true),
+                        DataTypes.createStructField("storeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("storeSales", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("storeCost", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("unitSales", DataTypes.DoubleType, true)
+                ));
+StructType schema = DataTypes.createStructType(fields);
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(schema)
+                .load(filePath);
+Dataset<Row> agg = salesAsDF.select(col("storeId"), col("unitSales"))
+                .groupBy(col("storeId"))
+                .agg(count("unitSales"));
+List<Row> rows = agg.collectAsList();
+Map<Integer, Long>  storeUnitSales = new HashedMap() ;
+rows.stream().forEach(s -> storeUnitSales.put(s.getInt(0),s.getLong(1)));
 ```
 
 </details>
 
-<details><summary>Exercice 6 avec DataFrame: Calculer le chiffre d'affaire par région.  
+<details><summary>Solution de l'exercice 6 avec DataFrame: Calculer le chiffre d'affaire par région.  
 
 ```
 JavaPairRDD<Integer, Double> caByRegion = ...
@@ -280,46 +304,40 @@ Region : 2 avec un CA : 76719.89
 ```
 </summary>
 
-#### Broadcaster le dataset store (qui est très léger) et faire un Map-side Join !!!
+#### Le moteur sql trouvera lui-même quel schéma de jointure le mieux adapté aux datasets ou le forcer à broadcaster le store.csv dataset !!!
 
 ```
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.broadcast.Broadcast;
-import org.apache.spark.sql.SparkSession;
-import scala.Tuple2;
-import scala.reflect.ClassTag$;
-
 // Lecture du fichier store à broadcaster (fichier très petit)
-Map<Integer, Integer> storeRegionMapRdd = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile("data/store.csv")
-                .mapToPair((PairFunction<String, Integer, Integer>) s -> {
-                    Store parse = Store.parse(s);
-                    return new Tuple2<>(parse.getId(), parse.getRegionId());
-                })
-                .collectAsMap();
-Broadcast<Map<Integer, Integer>> storeRegionMap = sparkSession.sparkContext().broadcast(storeRegionMapRdd, ClassTag$.MODULE$.apply(Map.class));
+Dataset<Row> storesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Store.SCHEMA)
+                .load(storeFilePath)
+                .select(col("id"),col("regionId")) ;
+// Charger le fichier sales.csv
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath);
+// Sans broadcast
+Dataset<Row> caByRegion = salesAsDF.join(storesAsDF, salesAsDF.col("storeId").equalTo(storesAsDF.col("id")))
+                .groupBy(col("storeId"))
+                .agg(sum(col("storeSales").multiply(col("unitSales"))).as("regionCA"));
 
-// Faire un Map-side Join
-JavaPairRDD<Integer, Double> caByRegion = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile("data/sales.csv")
-                .mapToPair((PairFunction<String, Integer, Double>) s -> {
-                    Sale sale = Sale.parse(s);
-                    return new Tuple2<>(storeRegionMap.value().getOrDefault(sale.getStoreId(), -1),
-                            sale.getUnitSales() * sale.getStoreSales());
-                })
-                .reduceByKey((Function2<Double, Double, Double>) (a, b) -> a + b);
-
-caByRegion.collectAsMap().forEach((k,v) -> System.out.println("Region : " + k + " avec un CA : " + v ));
+// En forçant le broadcast
+Dataset<Row> caByRegionWithBroadcast = salesAsDF.join(broadcast(storesAsDF), salesAsDF.col("storeId").equalTo(storesAsDF.col("id")))
+                .groupBy(col("storeId"))
+                .agg(sum(col("storeSales").multiply(col("unitSales"))).as("regionCA"));
 ```
 
 </details>
 
-<details><summary>Exercice 7 avec DataFrame: Comparer les ventes (en termes de CA) entre les premiers trimestres (Q1) de 1997 et 1998    
+<details><summary>Solution de l'exercice 7 avec DataFrame: Comparer les ventes (en termes de CA) entre les premiers trimestres (Q1) de 1997 et 1998    
 
 ```
 JavaPairRDD<Integer, Double>  yearCAQuarter= ...
@@ -332,26 +350,30 @@ CA Q1 de l'année 1998 : 965701.8800000021
 </summary>
 
 ```
-// Clé=TimeId et Valeur=Année
-Map<Integer, Integer> quarterTimeId = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(timeByDayFilePath)
-                .map((Function<String, TimeByDay>) s -> TimeByDay.parse(s))
-                .filter((Function<TimeByDay, Boolean>) s -> s.getQuarter().equals(quarter))
-                .mapToPair((PairFunction<TimeByDay, Integer, Integer>) timeByDay -> new Tuple2<>(timeByDay.getTimeId(),         
-                                    timeByDay.getTheYear()))
-                .collectAsMap();
+// Lecture du fichier store à broadcaster (fichier très petit)
+Dataset<Row> times = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(TimeByDay.SCHEMA)
+                .load(timeByDayFilePath)
+                .where(col("quarter").equalTo(quarter))
+                .select(col("timeId"),col("theYear")) ;
 
-Broadcast<Map<Integer, Integer>> filteredTimeIds = sparkSession.sparkContext().broadcast(quarterTimeId,   
-                                                                                       ClassTag$.MODULE$.apply(Map.class));
-JavaPairRDD<Integer, Double>  yearCAQuarter= JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(salesFilePath)
-                .map((Function<String, Sale>) s -> Sale.parse(s))
-                .filter((Function<Sale, Boolean>) sale -> filteredTimeIds.value().containsKey(sale.getTimeId()))
-                .mapToPair((PairFunction<Sale, Integer, Double>) sale ->
-                        new Tuple2<>(filteredTimeIds.value().getOrDefault(sale.getTimeId(), -1), sale.getStoreSales() * 
-                                                                                                  sale.getUnitSales()))
-                .reduceByKey((x, y) -> x + y);
-yearCAQuarter.collectAsMap().forEach((k,v) -> System.out.println("CA " + quarter + " de l'année " + k + " : " + v ));
+
+// Charger le fichier sales.csv
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath);
+
+Dataset<Row> caByQuarter = salesAsDF.join(broadcast(times), salesAsDF.col("timeId").equalTo(times.col("timeId")), "right_outer");
+caByQuarter.show();
+
 ```
 
 </details>
