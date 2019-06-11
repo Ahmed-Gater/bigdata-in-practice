@@ -28,7 +28,7 @@ Dataset<Row> salesAsDFWithoutSchemaInferring = sparkSession
                 .option("header", "false")
                 .load(filePath);
 
-// Version 2: Charger avec un schéma
+// Version 2: Charger le fichier en définissant un schéma
 ArrayList<StructField> fields = new ArrayList<>(
                 Arrays.asList(
                         DataTypes.createStructField("PRODUCT_ID", DataTypes.LongType, true),
@@ -81,30 +81,101 @@ root
 </p>
 </details>
 
-<details><summary>Exercice 3 avec DataFrame: Charger le fichier des ventes (sales.csv) dans une RDD de type Sale. La classe Sale est aussi à développer
+<details><summary>Solution de l'exercice 3: charger le fichier des ventes (sales.csv) dans une Dataset<Sale>
 
 ```
-JavaRDD<Sale> salesAsSaleObject = ...
+Dataset<Sale> as  = ...
 ```
 </summary>  
 
-#### Charger le fichier comme à l'exercice 2 et mapper chaque ligne vers un objet Sale qu'on aura créé !!!
+#### On peut transformet un Dataset\<Row> à un Dataset\<Sale> en utilisant un encoder ou un aprés mapping du dataframe (si on veut dériver des objets avant d'appliquer l'encoder) !!!
 
 ```
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
+// Version 1: transformer avec un encoder
+ArrayList<StructField> fields = new ArrayList<>(
+                Arrays.asList(
+                        DataTypes.createStructField("productId", DataTypes.LongType, true),
+                        DataTypes.createStructField("timeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("customerId", DataTypes.LongType, true),
+                        DataTypes.createStructField("promotionId", DataTypes.LongType, true),
+                        DataTypes.createStructField("storeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("storeSales", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("storeCost", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("unitSales", DataTypes.DoubleType, true)
+                ));
+StructType schema = DataTypes.createStructType(fields);
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(schema)
+                .load(filePath);
+Encoder<Sale> saleEncoder = Encoders.bean(Sale.class);
+Dataset<Sale> as = salesAsDF.as(saleEncoder);
+as.printSchema();
 
-JavaRDD<Sale> salesAsObjects = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile("data/sales.csv")
-                .map((Function<String, Sale>) s -> Sale.parse(s, ";"));
+// Version 2: transformer avec une Map
+ArrayList<StructField> fields = new ArrayList<>(
+                Arrays.asList(
+                        DataTypes.createStructField("productId", DataTypes.LongType, true),
+                        DataTypes.createStructField("timeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("customerId", DataTypes.LongType, true),
+                        DataTypes.createStructField("promotionId", DataTypes.LongType, true),
+                        DataTypes.createStructField("storeId", DataTypes.IntegerType, true),
+                        DataTypes.createStructField("storeSales", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("storeCost", DataTypes.DoubleType, true),
+                        DataTypes.createStructField("unitSales", DataTypes.DoubleType, true)
+                ));
+StructType schema = DataTypes.createStructType(fields);
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(schema)
+                .load(filePath);
+
+Dataset<Sale> salesAsDataSet = salesAsDF.map((MapFunction<Row, Sale>) row -> Sale
+                .builder()
+                .productId((Integer) row.get(0))
+                .timeId((Integer) row.get(1))
+                .customerId((Long) row.get(2))
+                .promotionId((Integer) row.get(3))
+                .storeId((Integer) row.get(4))
+                .storeSales((Double) row.get(5))
+                .storeCost((Double) row.get(6))
+                .unitSales((Double) row.get(7))
+                .build(), 
+                Encoders.bean(Sale.class));
+salesAsDataSet.printSchema();
 ```
-avec comme résultat:
+Et les schéma du DataSet est:
 
 ```
-Sale(productId=337, timeId=371, customerId=6280, promotionId=0, storeId=2, storeSales=1.5, storeCost=0.51, unitSales=2.0)
-Sale(productId=1512, timeId=371, customerId=6280, promotionId=0, storeId=2, storeSales=1.62, storeCost=0.6318, unitSales=3.0)
-Sale(productId=963, timeId=371, customerId=4018, promotionId=0, storeId=2, storeSales=2.4, storeCost=0.72, unitSales=1.0)
+// Schema avec la version 1
+root
+ |-- productId: long (nullable = true)
+ |-- timeId: integer (nullable = true)
+ |-- customerId: long (nullable = true)
+ |-- promotionId: long (nullable = true)
+ |-- storeId: integer (nullable = true)
+ |-- storeSales: double (nullable = true)
+ |-- storeCost: double (nullable = true)
+ |-- unitSales: double (nullable = true)
+
+// Schema avec la version 2
+root
+ |-- customerId: long (nullable = true)
+ |-- productId: integer (nullable = true)
+ |-- promotionId: integer (nullable = true)
+ |-- storeCost: double (nullable = true)
+ |-- storeId: integer (nullable = true)
+ |-- storeSales: double (nullable = true)
+ |-- timeId: integer (nullable = true)
+ |-- unitSales: double (nullable = true)
+
+
 ```
 </details>
 
