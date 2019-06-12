@@ -11,7 +11,7 @@ La version de Spark pour ces exercices est 2.4.2 et scala 11.
 
 <details><summary>Solution de l'exercice 2: Charger le fichier des ventes (sales.csv) dans un DataFrame
 
-```
+```java
 DataSet<Row> salesAsDF = ...
 ```
 
@@ -19,7 +19,7 @@ DataSet<Row> salesAsDF = ...
 <p>
   
 #### Un fichier peut être chargé en laissant l'API inférrer le schéma ou définir son propre schéma avec DataTypes !!!
-```
+```java
 // Version 1: Charger sans schéma
 Dataset<Row> salesAsDFWithoutSchemaInferring = sparkSession
                 .read()
@@ -52,7 +52,7 @@ Dataset<Row> salesAsDFWithSchemaDefined = sparkSession
 
 avec les schémas correspondant:
 
-```
+```java
 // Printing schema of dataframe loaded by inferring schema
 salesAsDFWithoutSchemaInferring.printSchema() ;
 root
@@ -83,14 +83,14 @@ root
 
 <details><summary>Solution de l'exercice 3: charger le fichier des ventes (sales.csv) dans une Dataset<Sale>
 
-```
+```java
 Dataset<Sale> as  = ...
 ```
 </summary>  
 
 #### On peut transformer un Dataset\<Row> à un Dataset\<Sale> en utilisant un encoder ou un aprés mapping du dataframe (si on veut dériver des objets avant d'appliquer l'encoder) !!!
 
-```
+```java
 // Version 1: transformer avec un encoder
 ArrayList<StructField> fields = new ArrayList<>(
                 Arrays.asList(
@@ -152,7 +152,7 @@ salesAsDataSet.printSchema();
 ```
 Et les schémas du DataSet est:
 
-```
+```java
 // Schema avec la version 1
 root
  |-- productId: long (nullable = true)
@@ -181,7 +181,7 @@ root
 
 <details><summary>Solution de l'exercice 4 avec DataFrame: Calculer le chiffre d'affaire par magasin
 
-```
+```java
 Le résultat peut correspondre à: 
 +-------+------------------+
 |storeId|        sum(rowCA)|
@@ -199,7 +199,7 @@ Le résultat peut correspondre à:
 
 * Solution avec groupBy et sum
 
-```
+```java
 ArrayList<StructField> fields = new ArrayList<>(
                 Arrays.asList(
                         DataTypes.createStructField("productId", DataTypes.LongType, true),
@@ -226,14 +226,14 @@ caByStore.show();
 ```
 
 * Solution avec groupBy et agg (plusieurs fonctions d'aggrégation sont implémentées)
-```
+```java
 Dataset<Row> caByStore = salesAsDF.select(col("storeId"), col("storeSales").multiply(col("unitSales")).as("rowCA"))
                 .groupBy(col("storeId"))
                 .agg(sum(col("rowCA")));
 ```
 
 Le résultat ressemble à:
-```
+```java
 +-------+------------------+
 |storeId|        sum(rowCA)|
 +-------+------------------+
@@ -248,7 +248,7 @@ Le résultat ressemble à:
 
 <details><summary>Solution de l'exercice 5 avec DataFrame: Calculer le nombre d'unités vendues par magasin
 
-```
+```java
 Map<Integer, Long> numberUnitsByStore = ...
 avec un résultat correspondant à: 
 Magasin : 5 a un vendu : 1298 unités
@@ -260,7 +260,7 @@ Magasin : 14 a un vendu : 2593 unités
 </summary>  
 
 #### Utiliser la fonction agg présentée dans l'exercice 4 
-```
+```java
 ArrayList<StructField> fields = new ArrayList<>(
                 Arrays.asList(
                         DataTypes.createStructField("productId", DataTypes.LongType, true),
@@ -292,7 +292,7 @@ rows.stream().forEach(s -> storeUnitSales.put(s.getInt(0),s.getLong(1)));
 
 <details><summary>Solution de l'exercice 6 avec DataFrame: Calculer le chiffre d'affaire par région.  
 
-```
+```java
 JavaPairRDD<Integer, Double> caByRegion = ...
 avec un résultat correspondant à: 
 Region : 23 avec un CA : 537768.1800000002
@@ -306,7 +306,7 @@ Region : 2 avec un CA : 76719.89
 
 #### Le moteur sql trouvera lui-même quel schéma de jointure le mieux adapté aux datasets ou le forcer à broadcaster le store.csv dataset !!!
 
-```
+```java
 // Lecture du fichier store à broadcaster (fichier très petit)
 Dataset<Row> storesAsDF = sparkSession
                 .read()
@@ -339,7 +339,7 @@ Dataset<Row> caByRegionWithBroadcast = salesAsDF.join(broadcast(storesAsDF), sal
 
 <details><summary>Solution de l'exercice 7 avec DataFrame: Comparer les ventes (en termes de CA) entre les premiers trimestres (Q1) de 1997 et 1998    
 
-```
+```java
 JavaPairRDD<Integer, Double>  yearCAQuarter= ...
 
 CA Q1 de l'année 1997 : 460615.02999999735
@@ -349,7 +349,7 @@ CA Q1 de l'année 1998 : 965701.8800000021
 
 </summary>
 
-```
+```java
 // Lecture du fichier store à broadcaster (fichier très petit)
 Dataset<Row> times = sparkSession
                 .read()
@@ -389,7 +389,7 @@ Envoi de documents vers ES: es.index("sales",map);
 </summary>
 La fonction util.rowToMap transforme une Row à une Map indexable sur Elasticsearch
 
-```
+```java
 // Charger le fichier sales.csv
 Dataset<Row> salesAsDF = sparkSession
                 .read()
@@ -417,7 +417,7 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
   Petite contrainte, le fichier customer.csv ne peut pas être broadcasté en l'état.
   Le résultat attendu est:
   
-  ```
+  ```java
   Education level : Graduate Degree a un chiffre d'affaires : 284358.7000000002
   Education level : High School Degree a un chiffre d'affaires : 1614680.6999999923
   Education level : Partial College a un chiffre d'affaires : 506574.38000000064
@@ -428,7 +428,7 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
   </summary>
   L'idée de cette question est quand on fait une jointure, on réduit au maximum les données sur lesquelles on ne garde que les donnée nécessaires à la jointure pour réduire le coût du shuffling. 
   
-  ```
+  ```java
   // Lecture du fichier customer à broadcaster
   Dataset<Row> customerEducation = sparkSession
                 .read()
@@ -463,7 +463,8 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
   </summary>
   
  
-  ```
+  ```java
+ // Charger le fichier sales.csv
  Dataset<Row> salesAsDF = sparkSession
                 .read()
                 .format("csv")
@@ -471,11 +472,82 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
                 .option("header", "false")
                 .schema(Sale.SCHEMA)
                 .load(salesFilePath) ;
- // Stocker le DF au format CSV
  salesAsDF.write()
           .format("csv")
+          .option("sep",";")
+          .option("header","false")
           .mode(SaveMode.Ignore)
           .save(destinationFilePath);
   ```
   
   </details>
+   </details>
+   
+<details><summary>Exercie 2: stocker les sales en les partitionnant par date et store et en utilisant ORC, CSV et Parquet comme formats de stockage. Le schéma de la table à stocker est comme suit:
+
+```java
+ root
+ |-- productId: long (nullable = true)
+ |-- timeId: integer (nullable = true)
+ |-- customerId: long (nullable = true)
+ |-- promotionId: long (nullable = true)
+ |-- storeId: integer (nullable = true)
+ |-- storeSales: double (nullable = true)
+ |-- storeCost: double (nullable = true)
+ |-- unitSales: double (nullable = true)
+ |-- theDate: string (nullable = true)
+ ``` 
+  </summary>
+ 
+ ```java
+ //Charger le fichier times
+ Dataset<Row> times = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(TimeByDay.SCHEMA)
+                .load(timeByDayFilePath)
+                .select(col("timeId").as("tId"),col("theDate"))
+                ;
+
+ // Charger le fichier sales.csv
+ Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath)
+                ;
+ Dataset<Row> salesToStore = salesAsDF
+                .join(times, salesAsDF.col("timeId").equalTo(times.col("tId")))
+                .drop(col("tId"));
+ // Stockage en CSV
+ salesToStore.write()
+                .format("csv")
+                .partitionBy("theDate","storeId")
+                .option("sep",";")
+                .option("header","false")
+                .save(destinationDir)
+        ;
+  // Stockage en ORC
+  salesToStore.write()
+                .format("orc")
+                .partitionBy("theDate","storeId")
+                .mode(SaveMode.Overwrite)
+                .option("orc.create.index","true")
+                .option("orc.bloom.filter.columns","customerId")
+                .save(destinationDir);
+
+  // Stockage en Parquet
+  salesToStore.write()
+                .format("parquet")
+                .partitionBy("theDate","storeId")
+                .option("compression.codec", "snappy")
+                .mode(SaveMode.Ignore)
+                .save(destinationDir);
+
+ ```
+  
+</details>
