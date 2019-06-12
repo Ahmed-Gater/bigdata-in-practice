@@ -413,7 +413,7 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
 </details>
 
 
-<details><summary>Exercice 9 avec DataFrame: calculer le chiffre d'affaires généré par niveau d'instruction (colonne education du fichier customer.csv.
+<details><summary>Solution de l'exercice 9 avec DataFrame: calculer le chiffre d'affaires généré par niveau d'instruction (colonne education du fichier customer.csv.
   Petite contrainte, le fichier customer.csv ne peut pas être broadcasté en l'état.
   Le résultat attendu est:
   
@@ -429,43 +429,53 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
   L'idée de cette question est quand on fait une jointure, on réduit au maximum les données sur lesquelles on ne garde que les donnée nécessaires à la jointure pour réduire le coût du shuffling. 
   
   ```
-  JavaPairRDD<Long, String> customerEducationLevel = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(customerFilePath)
-                .mapToPair((PairFunction<String, Long, String>) s -> {
-                    Customer parse = Customer.parse(s);
-                    return new Tuple2<>(parse.getCustomerId(), parse.getEducation());
-                });
+  // Lecture du fichier customer à broadcaster
+  Dataset<Row> customerEducation = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Customer.SCHEMA)
+                .load(customerFilePath)
+                .select(col("customerId").as("cid"),col("education"))
+                ;
 
-        JavaPairRDD<Long, Double> customerSales = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(salesFilePath)
-                .mapToPair((PairFunction<String, Long, Double>) s -> {
-                            Sale parse = Sale.parse(s);
-                            return new Tuple2<>(parse.getCustomerId(), parse.getUnitSales() * parse.getStoreSales());
-                        }
-                );
-        JavaPairRDD<String, Double> educationExpenses =
-                customerSales.join(customerEducationLevel)
-                        .values()
-                        .mapToPair((PairFunction<Tuple2<Double, String>, String, Double>) t ->
-                                    new Tuple2<>(t._2(), t._1()))
-                        .reduceByKey((Function2<Double, Double, Double>) (o, o2) -> o + o2);
-        educationExpenses.collectAsMap().forEach((k,v) -> System.out.println("Education level : " + k + " a un chiffre d'affaires : " + v));
+  // Charger le fichier sales.csv
+  Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath)
+                .select(col("customerId"),col("storeSales").multiply(col("unitSales")).as("rowCA"))
+                ;
+  Dataset<Row> sum = salesAsDF.join(customerEducation, salesAsDF.col("customerId").equalTo(customerEducation.col("cId")))
+                .groupBy(col("education"))
+                .agg(sum(col("rowCA")).as("caByEducationLevel"))
+                ;
   ```
      
   </details>
 
 
-<details><summary>Exercice 10 avec DataFrame: similaire à l'exercice 8 mais en stockant les résultats sous format CSV sur HDFS.
+<details><summary>Solution de l'exercice 10 avec DataFrame: similaire à l'exercice 8 mais en stockant les résultats sous format CSV sur HDFS.
   </summary>
   
-  L'idée est de transformer le résultat de l'enrichissement à une JavaRDD<String> où chaque entrée représente l'objet enrichi sours format CSV. 
-  
+ 
   ```
-  JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(salesFilePath)
-                .map((Function<String, Sale>) s -> Sale.parse(s))
-                .map(s -> s.toCSVFormat(";"))
-                .saveAsTextFile("data/salesenriched.csv");
+ Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath) ;
+ // Stocker le DF au format CSV
+ salesAsDF.write()
+          .format("csv")
+          .mode(SaveMode.Ignore)
+          .save(destinationFilePath);
   ```
   
   </details>
