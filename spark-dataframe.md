@@ -388,6 +388,7 @@ Envoi de documents vers ES: es.index("sales",map);
 
 </summary>
 La fonction util.rowToMap transforme une Row à une Map indexable sur Elasticsearch
+
 ```
 // Charger le fichier sales.csv
 Dataset<Row> salesAsDF = sparkSession
@@ -408,7 +409,9 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
             }
         });
 ```
+
 </details>
+
 
 <details><summary>Exercice 9 avec DataFrame: calculer le chiffre d'affaires généré par niveau d'instruction (colonne education du fichier customer.csv.
   Petite contrainte, le fichier customer.csv ne peut pas être broadcasté en l'état.
