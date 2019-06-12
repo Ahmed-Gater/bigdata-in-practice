@@ -378,7 +378,7 @@ caByQuarter.show();
 
 </details>
 
-<details><summary>Exercice 8 avec DataFrame: Aprés avoir joint les sales, time_id, store_id, stocker le résultat sur Elasticsearch. Un objet Java permettant de communiquer avec Elasticsearch est fourni dans le git. Il offre une méthode prenant comme entrée une Map<> et qui l'envoie vers Elasticsearch. Une description de l'installation d'un noeud Elasticsearch via docker est également fournie dans le git. Notez que le but dans cet exercice n'est pas de comprendre le fonctionnement d'ES, mais de savoir comment communiquer avec un service externe à partir de Spark.      
+<details><summary>Solution de l'exercice 8 avec DataFrame:       
 
 ```
 Création du client ES: ESClient es = new ESClient("localhost",9200)  
@@ -387,40 +387,26 @@ Envoi de documents vers ES: es.index("sales",map);
 ```
 
 </summary>
-
+La fonction util.rowToMap transforme une Row à une Map indexable sur Elasticsearch
 ```
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.aga.sparkinpractice.clients.ESClient;
-import org.aga.sparkinpractice.model.Sale;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.*;
-import org.apache.spark.sql.SparkSession;
+// Charger le fichier sales.csv
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath);
 
-JavaRDD<Sale> sales = JavaSparkContext.fromSparkContext(sparkSession.sparkContext())
-                .textFile(salesFilePath)
-                .map((Function<String, Sale>) s -> Sale.parse(s));
-// Option 1 avec foreachPartition
-sales.foreachPartition((VoidFunction<Iterator<Sale>>) saleIterator -> {
+salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
             ESClient es = new ESClient("localhost",9200) ;
-            ObjectMapper oMapper = new ObjectMapper();
-            saleIterator.forEachRemaining(sale -> {
-                Map<String, Object> map = oMapper.convertValue(sale, Map.class);
-                es.index("sales",map);
-            });
-});
-// Option 2 avec mapPartitions
-sales.mapPartitions((FlatMapFunction<Iterator<Sale>, Object>) saleIterator -> {
-            ESClient es = new ESClient("localhost",9200) ;
-            ObjectMapper oMapper = new ObjectMapper();
-            saleIterator.forEachRemaining(sale -> {
-                Map<String, Object> map = oMapper.convertValue(sale, Map.class);
-                es.index("sales",map);
-            });
-            return null;
-}).take(1);
-
+            @Override
+            public void call(Iterator<Row> iterator) throws Exception {
+                iterator.forEachRemaining(sale -> {
+                    es.index("sales",Util.rowToMap(sale));
+                });
+            }
+        });
 ```
 </details>
 
