@@ -712,3 +712,45 @@ salesCleant.explain() ;
       +- *(1) Filter isnotnull(id#0)
          +- *(1) FileScan csv [id#0] Batched: false, Format: CSV, Location: InMemoryFileIndex[file:/D:/BDAcademyCode/bdacademy/data/store.csv], PartitionFilters: [], PushedFilters: [IsNotNull(id)], ReadSchema: struct<id:int>
 ```
+</details>
+
+<details><summary>Exercie 6: calculer le le CA,le cout et la marge maximal par storeId ainsi qu'au niveau global
+ </summary>
+  
+ #### La solution: 
+ 
+ ```
+ // Charger le fichier sales.csv
+ Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath)
+                .withColumn("rowCA",col("storeSales").multiply(col("unitSales")))
+                .withColumn("rowCost",col("storeCost").multiply(col("unitSales")))
+                .withColumn("margin",col("storeSales").multiply(col("unitSales")).minus(col("storeCost").multiply(col("unitSales"))))
+                ;
+Dataset<Row> agg = salesAsDF.rollup("storeId").agg(ImmutableMap.of("rowCA", "sum", "rowCost", "sum","margin","max"));
+```
+
+Ce qui donnera comme résultat:
+
+```
++---------+------------------+------------------+------------------+
+|  storeId|        sum(rowCA)|      sum(rowCost)|       max(margin)|
++---------+------------------+------------------+------------------+
+|        1|164537.21000000037| 65966.98699999962|           65.7225|
+|        6| 310913.3200000007|124376.34520000008|             67.66|
+|       23|151039.54000000007| 60404.26209999999|             66.81|
+|        4| 167369.9499999998|  67236.0063999999|            89.244|
+|       16|352874.43999999994| 141130.3777000002|            69.475|
+|     null| 5450570.259999958|2182034.5484999768|           90.7776|
+|       22|18206.400000000005|         7241.4041|26.174400000000002|
+|       14|15890.259999999998| 6332.340100000005|23.107499999999998|
+|       21|240343.31000000064| 96383.51200000019|            69.475|
+```
+
+
+</details>
