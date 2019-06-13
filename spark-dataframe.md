@@ -754,3 +754,44 @@ Ce qui donnera comme résultat:
 
 
 </details>
+
+<details><summary>Exercie 7: en utilisant Spark SQL, retourner la table customer en replacant yearlyIncome par la moyenne entre la borne supérieure et la borne inférieure. Le résultat ressemnle à:
+ 
+  ```
+ +------------+--------------------+
+|yearlyIncome|formatedYearlyIncome|
++------------+--------------------+
+| $30K - $50K|             40000.0|
+| $70K - $90K|             80000.0|
+| $50K - $70K|             60000.0|
+| $10K - $30K|             20000.0|
+| $30K - $50K|             40000.0|
+ ```
+
+ </summary>
+  
+ #### La solution: 
+ 
+ ```
+ // Lecture du fichier customer à broadcaster
+ Dataset<Row> customerAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Customer.SCHEMA)
+                .load(customerFilePath) ;
+ customerAsDF.createGlobalTempView("customer");
+ customerAsDF.sparkSession().sqlContext().udf().register("income", new UDF1<String, Double>() {
+            @Override
+            public Double call(String rawIncome) {
+                //"$70K - $90K"
+                String[] split = rawIncome.replace('$', ' ').replace('K', ' ').trim().split("-");
+                Double lowerBound = Double.valueOf(split[0])*1000 ;
+                Double upperBound = Double.valueOf(split[1])*1000 ;
+                return (lowerBound+upperBound)/2 ;
+            }
+        }, DataTypes.DoubleType) ;
+
+ sparkSession.sql("select income(yearlyIncome) from global_temp.customer").show();
+```
