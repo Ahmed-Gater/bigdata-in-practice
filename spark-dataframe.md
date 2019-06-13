@@ -664,3 +664,48 @@ results.show();
 ```
   
 </details>
+
+<details><summary>Exercie 5: Quel est le type de jointure effectué dans le code suivant
+  
+```java
+Dataset<Row> storesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Store.SCHEMA)
+                .load(storeFilePath)
+                .select(col("id").as("stId"))
+                ;
+ // Charger le fichier sales.csv
+ Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath)
+                ;
+
+ Dataset<Row> salesCleant = salesAsDF.drop(col("promotionId"))
+                .join(storesAsDF, salesAsDF.col("storeId").equalTo(storesAsDF.col("stId")),"left_outer") ;
+```
+</summary>
+
+#### Pour le savoir, il faut afficher le plan physique avec:
+
+```java
+salesCleant.explain() ;
+```
+
+#### Ce qui donnera: 
+
+```
+== Physical Plan ==
+*(2) BroadcastHashJoin [storeId#54], [stId#48], LeftOuter, BuildRight
+:- *(2) FileScan csv [productId#50L,timeId#51,customerId#52L,storeId#54,storeSales#55,storeCost#56,unitSales#57] Batched: false, Format: CSV, Location: InMemoryFileIndex[file:/D:/BDAcademyCode/bdacademy/data/sales.csv], PartitionFilters: [], PushedFilters: [], ReadSchema: struct<productId:bigint,timeId:int,customerId:bigint,storeId:int,storeSales:double,storeCost:doub...
++- BroadcastExchange HashedRelationBroadcastMode(List(cast(input[0, int, true] as bigint)))
+   +- *(1) Project [id#0 AS stId#48]
+      +- *(1) Filter isnotnull(id#0)
+         +- *(1) FileScan csv [id#0] Batched: false, Format: CSV, Location: InMemoryFileIndex[file:/D:/BDAcademyCode/bdacademy/data/store.csv], PartitionFilters: [], PushedFilters: [IsNotNull(id)], ReadSchema: struct<id:int>
+```
