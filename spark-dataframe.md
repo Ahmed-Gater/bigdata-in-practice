@@ -18,7 +18,7 @@ DataSet<Row> salesAsDF = ...
 </summary>  
 <p>
   
-#### Un fichier peut être chargé en laissant l'API inférrer le schéma ou définir son propre schéma avec DataTypes !!!
+#### Solution: un fichier peut être chargé en laissant l'API inférrer le schéma ou définir son propre schéma avec DataTypes !!!
 ```java
 // Version 1: Charger sans schéma
 Dataset<Row> salesAsDFWithoutSchemaInferring = sparkSession
@@ -88,7 +88,7 @@ Dataset<Sale> as  = ...
 ```
 </summary>  
 
-#### On peut transformer un Dataset\<Row> à un Dataset\<Sale> en utilisant un encoder ou un aprés mapping du dataframe (si on veut dériver des objets avant d'appliquer l'encoder) !!!
+#### Solution: On peut transformer un Dataset\<Row> à un Dataset\<Sale> en utilisant un encoder ou un aprés mapping du dataframe (si on veut dériver des objets avant d'appliquer l'encoder) !!!
 
 ```java
 // Version 1: transformer avec un encoder
@@ -195,7 +195,7 @@ Le résultat peut correspondre à:
 ```
 </summary>  
 
-#### On peut le faire avec la méthode groupBy et sum ou bien avec la fonction agg !!!
+#### Solution: on peut le faire avec la méthode groupBy et sum ou bien avec la fonction agg !!!
 
 * Solution avec groupBy et sum
 
@@ -259,7 +259,8 @@ Magasin : 14 a un vendu : 2593 unités
 ```
 </summary>  
 
-#### Utiliser la fonction agg présentée dans l'exercice 4 
+#### Solution: utiliser la fonction agg présentée dans l'exercice 4 
+
 ```java
 ArrayList<StructField> fields = new ArrayList<>(
                 Arrays.asList(
@@ -304,7 +305,7 @@ Region : 2 avec un CA : 76719.89
 ```
 </summary>
 
-#### Le moteur sql trouvera lui-même quel schéma de jointure le mieux adapté aux datasets ou le forcer à broadcaster le store.csv dataset !!!
+#### Solution: le moteur sql trouvera lui-même quel schéma de jointure le mieux adapté aux datasets ou le forcer à broadcaster le store.csv dataset !!!
 
 ```java
 // Lecture du fichier store à broadcaster (fichier très petit)
@@ -349,6 +350,8 @@ CA Q1 de l'année 1998 : 965701.8800000021
 
 </summary>
 
+#### Solution: 
+
 ```java
 // Lecture du fichier store à broadcaster (fichier très petit)
 Dataset<Row> times = sparkSession
@@ -387,7 +390,9 @@ Envoi de documents vers ES: es.index("sales",map);
 ```
 
 </summary>
-La fonction util.rowToMap transforme une Row à une Map indexable sur Elasticsearch
+
+#### Solution: 
+la fonction util.rowToMap transforme une Row à une Map indexable sur Elasticsearch
 
 ```java
 // Charger le fichier sales.csv
@@ -426,7 +431,9 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
   ```
   
   </summary>
-  L'idée de cette question est quand on fait une jointure, on réduit au maximum les données sur lesquelles on ne garde que les donnée nécessaires à la jointure pour réduire le coût du shuffling. 
+
+#### Solution: 
+L'idée de cette question est quand on fait une jointure, on réduit au maximum les données sur lesquelles on ne garde que les donnée nécessaires à la jointure pour réduire le coût du shuffling. 
   
   ```java
   // Lecture du fichier customer à broadcaster
@@ -462,6 +469,7 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
 <details><summary>Solution de l'exercice 10 avec DataFrame: similaire à l'exercice 8 mais en stockant les résultats sous format CSV sur HDFS.
   </summary>
   
+ #### Solution: 
  
   ```java
  // Charger le fichier sales.csv
@@ -483,7 +491,7 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
   </details>
    </details>
    
-<details><summary>Exercie 2: stocker les sales en les partitionnant par date et store et en utilisant ORC, CSV et Parquet comme formats de stockage. Le schéma de la table à stocker est comme suit:
+<details><summary>Exercie 2: stocker les sales en les partitionnant par date et store et en utilisant ORC, CSV et Parquet comme formats de stockage. Expérimentez également les diffénts modes de sauvegarde (ecraser, mise à jour, ...). Le schéma de la table à stocker est comme suit:
 
 ```java
  root
@@ -498,6 +506,8 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
  |-- theDate: string (nullable = true)
  ``` 
   </summary>
+
+#### Solution: 
  
  ```java
  //Charger le fichier times
@@ -549,5 +559,108 @@ salesAsDF.foreachPartition(new ForeachPartitionFunction<Row>() {
                 .save(destinationDir);
 
  ```
+  
+</details>
+
+<details><summary>Exercie 3: refaire l'exercice 9 avec Spark SQL (calculer le chiffre d'affaires généré par niveau d'instruction)
+  </summary>
+
+#### Solution: les tables globales sont liés à une base de données globale  global_temp --> il faut utiliser le nom qualifié d'une table, i.e. global_temp.table_name !!! 
+
+```java
+// Lecture du fichier customer à broadcaster
+Dataset<Row> customerEducation = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Customer.SCHEMA)
+                .load(customerFilePath)
+                .select(col("customerId").as("cid"),col("education"))
+                ;
+// Charger le fichier sales.csv
+Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath)
+                .select(col("customerId"),col("storeSales").multiply(col("unitSales")).as("rowCA"))
+                ;
+// Publication des dataframes sous forme de tables globales accessibles par tous tant que la session est actice
+try {
+        salesAsDF.createGlobalTempView("sales");
+        customerEducation.createGlobalTempView("customer_education");
+}
+catch(Exception e){
+        throw new IllegalArgumentException("");
+}
+
+Dataset<Row> results = sparkSession.sql("select education,sum(rowca) from global_temp.sales " +
+                "inner join global_temp.customer_education " +
+                "on global_temp.sales.customerId=global_temp.customer_education.cId " +
+                "group by education");
+results.show();
+```
+</details>
+
+<details><summary>Exercie 4: nettoyage du dataset sales:
+  
+  ```
+  * Supprimer toutes les entrées où storeSales, unitSales ou storeCost n'est pas strictement supérieur à 0
+  * Supprimer les lignes où le customerId est vide/null
+  * Remplacer le storeId par -1 quand le storeId ne figure pas dans le référentiel store.csv
+  * Supprimer la colonne promotionId
+  ```
+  Le schéma du dataset résultat doit être: 
+ 
+ ```
+ root
+ |-- productId: long (nullable = true)
+ |-- timeId: integer (nullable = true)
+ |-- customerId: long (nullable = true)
+ |-- storeSales: double (nullable = true)
+ |-- storeCost: double (nullable = true)
+ |-- unitSales: double (nullable = true)
+ |-- storeId: integer (nullable = false)
+```
+  </summary>
+
+#### Solution: 
+  
+  ```java
+  // Lecture du fichier customer à broadcaster
+  Dataset<Row> storesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Store.SCHEMA)
+                .load(storeFilePath)
+                .select(col("id").as("stId"))
+                ;
+  // Charger le fichier sales.csv
+  Dataset<Row> salesAsDF = sparkSession
+                .read()
+                .format("csv")
+                .option("sep", ";")
+                .option("header", "false")
+                .schema(Sale.SCHEMA)
+                .load(salesFilePath)
+                ;
+
+  Dataset<Row> salesCleant = salesAsDF.drop(col("promotionId"))
+                .na()
+                .drop("any", new String[]{"storeCost", "storeSales", "unitSales","customerId"})
+                .where(col("storeCost").gt(0).and(col("storeSales").gt(0)).and(col("unitSales").gt(0)))
+                .join(storesAsDF, salesAsDF.col("storeId").equalTo(storesAsDF.col("stId")),"left_outer")
+                .na()
+                .fill(ImmutableMap.of("stId", -1))
+                .drop(col("storeId"))
+                .withColumnRenamed("stId","storeId")
+                ;
+  salesCleant.printSchema();
+```
   
 </details>
