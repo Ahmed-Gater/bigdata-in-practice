@@ -612,6 +612,7 @@ results.show();
   * Supprimer les lignes où le customerId est vide/null
   * Remplacer le storeId par -1 quand le storeId ne figure pas dans le référentiel store.csv
   * Supprimer la colonne promotionId
+  * Ajouter une colonne rowCA=unitSales*storeSales
   ```
   Le schéma du dataset résultat doit être: 
  
@@ -624,6 +625,7 @@ results.show();
  |-- storeCost: double (nullable = true)
  |-- unitSales: double (nullable = true)
  |-- storeId: integer (nullable = false)
+ |-- rowCA: double (nullable = true)
 ```
   </summary>
 
@@ -659,6 +661,7 @@ results.show();
                 .fill(ImmutableMap.of("stId", -1))
                 .drop(col("storeId"))
                 .withColumnRenamed("stId","storeId")
+                .withColumn("rowCA",col("storeSales").multiply(col("unitSales")));
                 ;
   salesCleant.printSchema();
 ```
