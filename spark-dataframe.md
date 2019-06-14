@@ -795,3 +795,36 @@ Ce qui donnera comme résultat:
 
  sparkSession.sql("select income(yearlyIncome) from global_temp.customer").show();
 ```
+</details>
+
+<details><summary>Exercie 8: calculer le CA, le cout, la marge et le nombre d'unités vendues par country, state, jour de semaine et par mois. Le résultat ressemble à:
+
+```
+|country|    state|   theDay| theMonth|                CA|              COST|            MARGIN|UNITSALES|
++-------+---------+---------+---------+------------------+------------------+------------------+---------+
+|   null|  Jalisco|  Tuesday|    April|              34.8|12.706500000000002|           22.0935|     13.0|
+| Mexico|  Jalisco|  Tuesday|    April|              34.8|12.706500000000002|           22.0935|     13.0|
+```
+
+</summary>
+
+```java
+Dataset<Row> salesAsDF = Sale.loadAsDF(sparkSession,salesFilePath) ;
+Dataset<Row> customerAsDF = Customer.loadAsDF(sparkSession, customerFilePath).withColumnRenamed("customerId","cId");
+Dataset<Row> storeAsDF = Store.loadAsDF(sparkSession, storeFilePath).withColumnRenamed("id","sId").drop(col("country"));
+Dataset<Row> timeAsDF = TimeByDay.loadAsDF(sparkSession, timeByDay).withColumnRenamed("timeId","tId");;
+
+Dataset<Row> denormalizedSales = salesAsDF
+        .join(broadcast(customerAsDF), salesAsDF.col("customerId").equalTo(customerAsDF.col("cId")), "left_outer")
+        .join(broadcast(storeAsDF), salesAsDF.col("storeId").equalTo(storeAsDF.col("sId")), "left_outer")
+        .join(broadcast(timeAsDF), salesAsDF.col("timeId").equalTo(timeAsDF.col("tId")), "left_outer") ;
+
+Dataset<Row> agg = denormalizedSales.cube("country","state", "theDay", "theMonth")
+                .agg(sum(col("storeSales").multiply(col("unitSales"))).as("CA"),
+                     sum(col("storeCost").multiply(col("unitSales"))).as("COST"),
+                     sum(col("storeSales").multiply(col("unitSales")).minus(col("storeCost").multiply(col("unitSales")))).as("MARGIN"),
+                     sum(col("unitSales")).as("UNITSALES")) ;
+agg.show(1000);
+```
+
+</details>
