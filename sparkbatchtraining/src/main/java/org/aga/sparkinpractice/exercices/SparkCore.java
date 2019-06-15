@@ -1,11 +1,11 @@
 package org.aga.sparkinpractice.exercices;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.aga.sparkinpractice.utils.ESClient;
 import org.aga.sparkinpractice.model.Customer;
 import org.aga.sparkinpractice.model.Sale;
 import org.aga.sparkinpractice.model.Store;
 import org.aga.sparkinpractice.model.TimeByDay;
+import org.aga.sparkinpractice.utils.ESClient;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -15,7 +15,8 @@ import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 import scala.reflect.ClassTag$;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.stream.StreamSupport;
 
 public class SparkCore {

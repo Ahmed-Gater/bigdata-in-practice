@@ -1,22 +1,24 @@
 package org.aga.sparkinpractice.exercices;
 
-import static org.apache.spark.sql.functions.*;
-
 import avro.shaded.com.google.common.collect.ImmutableMap;
 import org.aga.sparkinpractice.model.Customer;
-import org.aga.sparkinpractice.utils.ESClient;
-import org.aga.sparkinpractice.utils.Util;
 import org.aga.sparkinpractice.model.Sale;
 import org.aga.sparkinpractice.model.Store;
 import org.aga.sparkinpractice.model.TimeByDay;
+import org.aga.sparkinpractice.utils.ESClient;
+import org.aga.sparkinpractice.utils.Util;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.*;
+
+import static org.apache.spark.sql.functions.*;
 
 public class SparkDFDS {
 

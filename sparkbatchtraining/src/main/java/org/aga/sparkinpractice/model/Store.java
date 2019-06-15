@@ -1,13 +1,6 @@
 package org.aga.sparkinpractice.model;
 
 import lombok.*;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
-
-import java.util.Arrays;
 
 @Getter
 @Setter
@@ -63,11 +56,11 @@ public class Store {
                 .grocerySqft(Integer.valueOf(split[16]))
                 .frozenSqft(Integer.valueOf(split[17]))
                 .meatSqft(Integer.valueOf(split[18]))
-                .coffeeBar((split[19].equals("0")) ? false : true)
-                .videoStore((split[20].equals("0")) ? false : true)
-                .saladBar((split[21].equals("0")) ? false : true)
-                .preparedFood((split[22].equals("0")) ? false : true)
-                .florist((split[23].equals("0")) ? false : true)
+                .coffeeBar(!split[19].equals("0"))
+                .videoStore(!split[20].equals("0"))
+                .saladBar(!split[21].equals("0"))
+                .preparedFood(!split[22].equals("0"))
+                .florist(!split[23].equals("0"))
                 .build() ;
     }
 

@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.StructType;
 import scala.Tuple2;
 import scala.collection.Iterator;
 import scala.collection.JavaConverters;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;

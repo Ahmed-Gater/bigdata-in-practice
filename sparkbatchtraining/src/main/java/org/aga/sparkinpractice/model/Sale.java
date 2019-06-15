@@ -1,6 +1,7 @@
 package org.aga.sparkinpractice.model;
 
 import lombok.*;
+
 import java.io.Serializable;
 
 @Getter

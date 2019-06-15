@@ -1,13 +1,6 @@
 package org.aga.sparkinpractice.model;
 
 import lombok.*;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 
 @Getter
 @Setter
@@ -74,7 +67,7 @@ public class Customer {
                 .dateAccountPpened(String.valueOf(split[23]))
                 .memberCard(String.valueOf(split[24]))
                 .occupation(String.valueOf(split[25]))
-                .houseOwner((split[26].equals("N")) ? false : true)
+                .houseOwner(!split[26].equals("N"))
                 .numCarsOwned(Integer.valueOf(split[27]))
                 .fullName(String.valueOf(split[28]))
                 .build() ;
