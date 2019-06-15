@@ -1,4 +1,4 @@
-# Spark DataFrame
+# Spark DataFrame/DataSet
 
 ## Introduction
 La description des données utilisées pour ses exercices est accessible [ici](https://github.com/Ahmed-Gater/spark-in-practice/blob/master/datasetdescription.md).
