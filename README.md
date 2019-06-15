@@ -2,8 +2,7 @@
 Quoi de mieux que des exemples issus de la pratique pour s'initier au monde du Big Data.
 C'est une longue série d'exercices orgnisés comme suit: 
 * [Spark Core](https://github.com/Ahmed-Gater/bigdata-in-practice/blob/master/spark-core.md)
-* [Spark DataFrame](https://github.com/Ahmed-Gater/bigdata-in-practice/blob/master/spark-dataframe.md)
-* [Spark DataSet](https://github.com/Ahmed-Gater/bigdata-in-practice/blob/master/spark-dataset.md)
+* [Spark DataFrame/DataSet](https://github.com/Ahmed-Gater/bigdata-in-practice/blob/master/spark-dataframe-dataset.md)
 * [Spark Streaming](https://github.com/Ahmed-Gater/bigdata-in-practice/blob/master/spark-streaming.md)
 * [Spark Structured Streaming](https://github.com/Ahmed-Gater/bigdata-in-practice/blob/master/spark-structured-streaming.md)
 
