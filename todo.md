@@ -1,3 +1,5 @@
+* TO Global
+   * Créer une branche de solution par step pour les TPs
 * TO pour Spark Core RDD
   * reduce(func)
   * ~~broadcast~~
